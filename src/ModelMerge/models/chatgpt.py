@@ -764,8 +764,8 @@ class chatgpt(BaseLLM):
             if response.status_code != 200:
                 await response.aread()
                 raise Exception(
-                    f"{response.status_code} {
-                        response.reason_phrase} {response.text}"
+                    f"""{response.status_code} {
+                        response.reason_phrase} {response.text}"""
                 )
             response_role: str = ""
             full_response: str = ""
