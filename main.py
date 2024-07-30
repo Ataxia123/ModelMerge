@@ -5,9 +5,7 @@ from ModelMerge.utils import prompt
 from ModelMerge.models import chatgpt, claude3, gemini, groq
 
 LANGUAGE = os.environ.get("LANGUAGE", "Simplified Chinese")
-GPT_ENGINE = os.environ.get(
-    "GPT_ENGINE", "meta-llama/Meta-Llama-3.1-8B-Instruct")
-
+GPT_ENGINE = "meta-llama/Meta-Llama-3.1-8B-Instruct"
 API = os.environ.get("API", None)
 API_URL = os.environ.get("API_URL", None)
 
