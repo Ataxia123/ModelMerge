@@ -15,6 +15,7 @@ from ..utils.scripts import check_json
 from ..tools import function_call_list
 from ..plugins import PLUGINS, get_tools_result
 
+
 def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
     """
     Get filtered list of object variable names.
@@ -36,6 +37,7 @@ def get_filtered_keys_from_object(obj: object, *keys: str) -> Set[str]:
     # Only return specified keys that are in class_keys
     return {key for key in keys if key in class_keys}
 
+
 class chatgpt(BaseLLM):
     """
     Official ChatGPT API
@@ -44,8 +46,12 @@ class chatgpt(BaseLLM):
     def __init__(
         self,
         api_key: str,
-        engine: str = os.environ.get("GPT_ENGINE") or "gpt-3.5-turbo",
-        api_url: str = (os.environ.get("API_URL") or "https://api.openai.com/v1/chat/completions"),
+        engine: str = os.environ.get("GPT_ENGINE")
+        or "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        api_url: str = (
+            os.environ.get(
+                "API_URL") or "https://api.openai.com/v1/chat/completions"
+        ),
         system_prompt: str = "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally",
         proxy: str = None,
         timeout: float = 600,
@@ -61,7 +67,22 @@ class chatgpt(BaseLLM):
         """
         Initialize Chatbot with API key (from https://platform.openai.com/account/api-keys)
         """
-        super().__init__(api_key, engine, api_url, system_prompt, proxy, timeout, max_tokens, temperature, top_p, presence_penalty, frequency_penalty, reply_count, truncate_limit, use_plugins=use_plugins)
+        super().__init__(
+            api_key,
+            engine,
+            api_url,
+            system_prompt,
+            proxy,
+            timeout,
+            max_tokens,
+            temperature,
+            top_p,
+            presence_penalty,
+            frequency_penalty,
+            reply_count,
+            truncate_limit,
+            use_plugins=use_plugins,
+        )
         self.conversation: dict[str, list[dict]] = {
             "default": [
                 {
@@ -92,28 +113,68 @@ class chatgpt(BaseLLM):
         if convo_id not in self.conversation:
             self.reset(convo_id=convo_id)
         if function_name == "" and message and message != None:
-            self.conversation[convo_id].append({"role": role, "content": message})
+            self.conversation[convo_id].append(
+                {"role": role, "content": message})
         elif function_name != "" and message and message != None:
-            self.conversation[convo_id].append({"role": role, "name": function_name, "arguments": function_arguments, "content": message})
+            self.conversation[convo_id].append(
+                {
+                    "role": role,
+                    "name": function_name,
+                    "arguments": function_arguments,
+                    "content": message,
+                }
+            )
         else:
-            print('\033[31m')
+            print("\033[31m")
             print("error: add_to_conversation message is None or empty")
-            print("role", role, "function_name", function_name, "message", message)
-            print('\033[0m')
+            print("role", role, "function_name",
+                  function_name, "message", message)
+            print("\033[0m")
 
         conversation_len = len(self.conversation[convo_id]) - 1
         message_index = 0
         # print(json.dumps(self.conversation[convo_id], indent=4, ensure_ascii=False))
         while message_index < conversation_len:
-            if self.conversation[convo_id][message_index]["role"] == self.conversation[convo_id][message_index + 1]["role"]:
+            if (
+                self.conversation[convo_id][message_index]["role"]
+                == self.conversation[convo_id][message_index + 1]["role"]
+            ):
                 if self.conversation[convo_id][message_index].get("content"):
-                    if type(self.conversation[convo_id][message_index + 1]["content"]) == str \
-                    and type(self.conversation[convo_id][message_index]["content"]) == list:
-                        self.conversation[convo_id][message_index + 1]["content"] = [{"type": "text", "text": self.conversation[convo_id][message_index + 1]["content"]}]
-                    if type(self.conversation[convo_id][message_index]["content"]) == str \
-                    and type(self.conversation[convo_id][message_index + 1]["content"]) == list:
-                        self.conversation[convo_id][message_index]["content"] = [{"type": "text", "text": self.conversation[convo_id][message_index]["content"]}]
-                    self.conversation[convo_id][message_index]["content"] += self.conversation[convo_id][message_index + 1]["content"]
+                    if (
+                        type(self.conversation[convo_id]
+                             [message_index + 1]["content"])
+                        == str
+                        and type(self.conversation[convo_id][message_index]["content"])
+                        == list
+                    ):
+                        self.conversation[convo_id][message_index + 1]["content"] = [
+                            {
+                                "type": "text",
+                                "text": self.conversation[convo_id][message_index + 1][
+                                    "content"
+                                ],
+                            }
+                        ]
+                    if (
+                        type(self.conversation[convo_id]
+                             [message_index]["content"])
+                        == str
+                        and type(
+                            self.conversation[convo_id][message_index + 1]["content"]
+                        )
+                        == list
+                    ):
+                        self.conversation[convo_id][message_index]["content"] = [
+                            {
+                                "type": "text",
+                                "text": self.conversation[convo_id][message_index][
+                                    "content"
+                                ],
+                            }
+                        ]
+                    self.conversation[convo_id][message_index][
+                        "content"
+                    ] += self.conversation[convo_id][message_index + 1]["content"]
                 self.conversation[convo_id].pop(message_index + 1)
                 conversation_len = conversation_len - 1
             else:
@@ -150,7 +211,9 @@ class chatgpt(BaseLLM):
         Truncate the conversation
         """
         while True:
-            json_post = self.get_post_body(prompt, role, convo_id, model, pass_history, **kwargs)
+            json_post = self.get_post_body(
+                prompt, role, convo_id, model, pass_history, **kwargs
+            )
             # url = self.api_url.chat_url
             # if "gpt-4" in self.engine or "claude" in self.engine or (CUSTOM_MODELS and self.engine in CUSTOM_MODELS):
             # message_token = {
@@ -161,16 +224,18 @@ class chatgpt(BaseLLM):
                     "total": self.get_token_count(convo_id),
                 }
                 if "gpt-3.5" in self.engine:
-                    message_token = self.get_message_token(self.api_url, json_post)
+                    message_token = self.get_message_token(
+                        self.api_url, json_post)
             except:
-                print('\033[31m')
+                print("\033[31m")
                 print("error: get_message_token")
-                print('\033[0m')
+                print("\033[0m")
                 message_token = {
                     "total": 0,
                 }
 
-            print("message_token", message_token, "truncate_limit", self.truncate_limit)
+            print("message_token", message_token,
+                  "truncate_limit", self.truncate_limit)
             if (
                 message_token["total"] > self.truncate_limit
                 and len(self.conversation[convo_id]) > 1
@@ -191,6 +256,7 @@ class chatgpt(BaseLLM):
                 yield from self.extract_values(item)
         else:
             yield obj
+
     # def clear_function_call(self, convo_id: str = "default"):
     #     self.conversation[convo_id] = [item for item in self.conversation[convo_id] if '@Trash@' not in item['content']]
     #     function_call_items = [item for item in self.conversation[convo_id] if 'function' in item['role']]
@@ -220,9 +286,9 @@ class chatgpt(BaseLLM):
                         try:
                             num_tokens += len(encoding.encode(value))
                         except:
-                            print('\033[31m')
+                            print("\033[31m")
                             print("error value:", value)
-                            print('\033[0m')
+                            print("\033[0m")
                             num_tokens += 0
                 if key == "name":  # if there's a name, the role is omitted
                     num_tokens += 5  # role is always required and always 1 token
@@ -269,7 +335,6 @@ class chatgpt(BaseLLM):
             "total": 0,
         }
 
-
     def get_post_body(
         self,
         prompt: str,
@@ -281,7 +346,15 @@ class chatgpt(BaseLLM):
     ):
         json_post_body = {
             "model": model or self.engine,
-            "messages": self.conversation[convo_id] if pass_history else [{"role": "system","content": self.system_prompt[convo_id]},{"role": role, "content": prompt}],
+            "messages": (
+                self.conversation[convo_id]
+                if pass_history
+                else [
+                    {"role": "system",
+                        "content": self.system_prompt[convo_id]},
+                    {"role": role, "content": prompt},
+                ]
+            ),
             "max_tokens": 5000,
             "stream": True,
         }
@@ -301,13 +374,19 @@ class chatgpt(BaseLLM):
             "user": role,
         }
         json_post_body.update(copy.deepcopy(body))
-        if all(value == False for value in self.plugins[convo_id].values()) or self.use_plugins == False:
+        if (
+            all(value == False for value in self.plugins[convo_id].values())
+            or self.use_plugins == False
+        ):
             return json_post_body
         json_post_body.update(copy.deepcopy(function_call_list["base"]))
         for item in self.plugins[convo_id].keys():
             try:
                 if self.plugins[convo_id][item]:
-                    json_post_body["tools"].append({"type": "function", "function": function_call_list[item]})
+                    json_post_body["tools"].append(
+                        {"type": "function",
+                            "function": function_call_list[item]}
+                    )
             except:
                 pass
 
@@ -337,9 +416,19 @@ class chatgpt(BaseLLM):
         """
         # Make conversation if it doesn't exist
         if convo_id not in self.conversation or pass_history == False:
-            self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
-        self.add_to_conversation(prompt, role, convo_id=convo_id, function_name=function_name, total_tokens=total_tokens, function_arguments=function_arguments)
-        json_post, message_token = self.truncate_conversation(prompt, role, convo_id, model, pass_history, **kwargs)
+            self.reset(convo_id=convo_id,
+                       system_prompt=self.system_prompt[convo_id])
+        self.add_to_conversation(
+            prompt,
+            role,
+            convo_id=convo_id,
+            function_name=function_name,
+            total_tokens=total_tokens,
+            function_arguments=function_arguments,
+        )
+        json_post, message_token = self.truncate_conversation(
+            prompt, role, convo_id, model, pass_history, **kwargs
+        )
         # print(self.conversation[convo_id])
         model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
         print("model_max_tokens", model_max_tokens)
@@ -356,13 +445,18 @@ class chatgpt(BaseLLM):
         #             "content": mess["content"][0]["text"]
         #         }
         for _ in range(2):
-            replaced_text = json.loads(re.sub(r'/9j/([A-Za-z0-9+/=]+)', '/9j/***', json.dumps(json_post)))
+            replaced_text = json.loads(
+                re.sub(r"/9j/([A-Za-z0-9+/=]+)",
+                       "/9j/***", json.dumps(json_post))
+            )
             print(json.dumps(replaced_text, indent=4, ensure_ascii=False))
             response = None
             try:
                 response = self.session.post(
                     self.api_url.chat_url,
-                    headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
+                    headers={
+                        "Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"
+                    },
                     json=json_post,
                     timeout=kwargs.get("timeout", self.timeout),
                     stream=True,
@@ -376,7 +470,10 @@ class chatgpt(BaseLLM):
             except Exception as e:
                 print(f"发生了未预料的错误：{e}")
                 if "Invalid URL" in str(e):
-                    e = "You have entered an invalid API URL, please use the correct URL and use the `/start` command to set the API URL again. Specific error is as follows:\n\n" + str(e)
+                    e = (
+                        "You have entered an invalid API URL, please use the correct URL and use the `/start` command to set the API URL again. Specific error is as follows:\n\n"
+                        + str(e)
+                    )
                     raise Exception(f"{e}")
             # print("response.text", response.text)
             # print("response.status_code", response.status_code, response.status_code == 400, response and response.status_code == 400, response.text)
@@ -389,10 +486,13 @@ class chatgpt(BaseLLM):
                         del json_post["tool_choice"]
                 elif "invalid_request_error" in response.text:
                     for index, mess in enumerate(json_post["messages"]):
-                        if type(mess["content"]) == list and "text" in mess["content"][0]:
+                        if (
+                            type(mess["content"]) == list
+                            and "text" in mess["content"][0]
+                        ):
                             json_post["messages"][index] = {
                                 "role": mess["role"],
-                                "content": mess["content"][0]["text"]
+                                "content": mess["content"][0]["text"],
                             }
                 elif "'function' is not an allowed role" in response.text:
                     if json_post["messages"][-1]["role"] == "function":
@@ -400,7 +500,7 @@ class chatgpt(BaseLLM):
                         json_post["messages"][-1] = {
                             "role": "assistant",
                             "name": mess["name"],
-                            "content": mess["content"]
+                            "content": mess["content"],
                         }
                 else:
                     if "tools" in json_post:
@@ -412,28 +512,37 @@ class chatgpt(BaseLLM):
                 print("response.text", response.text)
                 if "Sorry, server is busy" in response.text:
                     for index, mess in enumerate(json_post["messages"]):
-                        if type(mess["content"]) == list and "text" in mess["content"][0]:
+                        if (
+                            type(mess["content"]) == list
+                            and "text" in mess["content"][0]
+                        ):
                             json_post["messages"][index] = {
                                 "role": mess["role"],
-                                "content": mess["content"][0]["text"]
+                                "content": mess["content"][0]["text"],
                             }
                 continue
             if response and response.status_code == 200:
                 if response.text == "":
                     for index, mess in enumerate(json_post["messages"]):
-                        if type(mess["content"]) == list and "text" in mess["content"][0]:
+                        if (
+                            type(mess["content"]) == list
+                            and "text" in mess["content"][0]
+                        ):
                             json_post["messages"][index] = {
                                 "role": mess["role"],
-                                "content": mess["content"][0]["text"]
+                                "content": mess["content"][0]["text"],
                             }
                     continue
                 else:
                     break
         # print("response.status_code", response.status_code, response.text)
         if response != None and response.status_code != 200:
-            raise Exception(f"{response.status_code} {response.reason} {response.text}")
+            raise Exception(f"{response.status_code} {
+                            response.reason} {response.text}")
         if response is None:
-            raise Exception(f"response is None, please check the connection or network.")
+            raise Exception(
+                f"response is None, please check the connection or network."
+            )
 
         response_role: str = None
         full_response: str = ""
@@ -442,19 +551,25 @@ class chatgpt(BaseLLM):
         need_function_call: bool = False
         total_tokens = 0
         for line in response.iter_lines():
-            if not line or line.decode("utf-8").startswith(':'):
+            if not line or line.decode("utf-8").startswith(":"):
                 continue
             # print(line.decode("utf-8"))
-            if line.decode("utf-8").startswith('data:'):
+            if line.decode("utf-8").startswith("data:"):
                 line = line.decode("utf-8")[5:]
                 if line.startswith(" "):
                     line = line[1:]
             else:
                 # print("line", line.decode("utf-8"))
-                if json.loads(line.decode("utf-8")).get("choices") \
-                and json.loads(line.decode("utf-8"))["choices"][0].get("message") \
-                and json.loads(line.decode("utf-8"))["choices"][0]["message"].get("content"):
-                    full_response = json.loads(line.decode("utf-8"))["choices"][0]["message"]["content"]
+                if (
+                    json.loads(line.decode("utf-8")).get("choices")
+                    and json.loads(line.decode("utf-8"))["choices"][0].get("message")
+                    and json.loads(line.decode("utf-8"))["choices"][0]["message"].get(
+                        "content"
+                    )
+                ):
+                    full_response = json.loads(line.decode("utf-8"))["choices"][0][
+                        "message"
+                    ]["content"]
                     yield full_response
                 else:
                     yield line.decode("utf-8")
@@ -486,7 +601,10 @@ class chatgpt(BaseLLM):
                 if "name" in function_call_content:
                     function_call_name = function_call_content["name"]
                 function_full_response += function_call_content["arguments"]
-                if function_full_response.count("\\n") > 2 or "}" in function_full_response:
+                if (
+                    function_full_response.count("\\n") > 2
+                    or "}" in function_full_response
+                ):
                     break
         if response_role == None:
             response_role = "assistant"
@@ -499,14 +617,38 @@ class chatgpt(BaseLLM):
                 self.function_calls_counter[function_call_name] = 1
             else:
                 self.function_calls_counter[function_call_name] += 1
-            if self.function_calls_counter[function_call_name] <= self.function_call_max_loop:
-                function_call_max_tokens = self.truncate_limit - message_token["total"] - 1000
+            if (
+                self.function_calls_counter[function_call_name]
+                <= self.function_call_max_loop
+            ):
+                function_call_max_tokens = (
+                    self.truncate_limit - message_token["total"] - 1000
+                )
                 if function_call_max_tokens <= 0:
                     function_call_max_tokens = int(self.truncate_limit / 2)
-                print("\033[32m function_call", function_call_name, "max token:", function_call_max_tokens, "\033[0m")
-                async for chunk in get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, chatgpt, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id):
+                print(
+                    "\033[32m function_call",
+                    function_call_name,
+                    "max token:",
+                    function_call_max_tokens,
+                    "\033[0m",
+                )
+                async for chunk in get_tools_result(
+                    function_call_name,
+                    function_full_response,
+                    function_call_max_tokens,
+                    self.engine,
+                    chatgpt,
+                    self.api_key,
+                    self.api_url,
+                    use_plugins=False,
+                    model=model,
+                    add_message=self.add_to_conversation,
+                    convo_id=convo_id,
+                ):
                     if "function_response:" in chunk:
-                        function_response = chunk.replace("function_response:", "")
+                        function_response = chunk.replace(
+                            "function_response:", "")
                     else:
                         yield chunk
                 # function_response = await get_tools_result(function_call_name, function_full_response, function_call_max_tokens, self.engine, chatgpt, self.api_key, self.api_url, use_plugins=False, model=model, add_message=self.add_to_conversation, convo_id=convo_id)
@@ -515,18 +657,50 @@ class chatgpt(BaseLLM):
                 function_response = "无法找到相关信息，停止使用 tools"
             response_role = "function"
             # print(self.conversation[convo_id][-1])
-            if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+            if (
+                self.conversation[convo_id][-1]["role"] == "function"
+                and self.conversation[convo_id][-1]["name"] == "get_search_results"
+            ):
                 mess = self.conversation[convo_id].pop(-1)
                 # print("Truncate message:", mess)
-            async for chunk in self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response):
+            async for chunk in self.ask_stream(
+                function_response,
+                response_role,
+                convo_id=convo_id,
+                function_name=function_call_name,
+                total_tokens=total_tokens,
+                model=model,
+                function_arguments=function_full_response,
+            ):
                 yield chunk
             # yield from self.ask_stream(function_response, response_role, convo_id=convo_id, function_name=function_call_name, total_tokens=total_tokens, model=model, function_arguments=function_full_response)
         else:
-            if self.conversation[convo_id][-1]["role"] == "function" and self.conversation[convo_id][-1]["name"] == "get_search_results":
+            if (
+                self.conversation[convo_id][-1]["role"] == "function"
+                and self.conversation[convo_id][-1]["name"] == "get_search_results"
+            ):
                 mess = self.conversation[convo_id].pop(-1)
-            self.add_to_conversation(full_response, response_role, convo_id=convo_id, total_tokens=total_tokens)
+            self.add_to_conversation(
+                full_response,
+                response_role,
+                convo_id=convo_id,
+                total_tokens=total_tokens,
+            )
             self.function_calls_counter = {}
-            if pass_history == False and len(self.conversation[convo_id]) >= 2 and ("You are a translation engine" in self.conversation[convo_id][-2]["content"] or (type(self.conversation[convo_id][-2]["content"]) == list and "You are a translation engine" in self.conversation[convo_id][-2]["content"][0]["text"])):
+            if (
+                pass_history == False
+                and len(self.conversation[convo_id]) >= 2
+                and (
+                    "You are a translation engine"
+                    in self.conversation[convo_id][-2]["content"]
+                    or (
+                        type(self.conversation[convo_id]
+                             [-2]["content"]) == list
+                        and "You are a translation engine"
+                        in self.conversation[convo_id][-2]["content"][0]["text"]
+                    )
+                )
+            ):
                 self.conversation[convo_id].pop(-1)
                 self.conversation[convo_id].pop(-1)
 
@@ -544,21 +718,38 @@ class chatgpt(BaseLLM):
         """
         # Make conversation if it doesn't exist
         if convo_id not in self.conversation or pass_history == False:
-            self.reset(convo_id=convo_id, system_prompt=self.system_prompt[convo_id])
+            self.reset(convo_id=convo_id,
+                       system_prompt=self.system_prompt[convo_id])
         self.add_to_conversation(prompt, "user", convo_id=convo_id)
         self.__truncate_conversation(convo_id=convo_id)
-        if self.engine == "gpt-4-1106-preview" or "gpt-4-0125-preview" in self.engine or "gpt-4-turbo" in self.engine:
+        if (
+            self.engine == "gpt-4-1106-preview"
+            or "gpt-4-0125-preview" in self.engine
+            or "gpt-4-turbo" in self.engine
+        ):
             model_max_tokens = kwargs.get("max_tokens", self.max_tokens)
         else:
-            model_max_tokens = min(self.get_max_tokens(convo_id=convo_id) - 500, kwargs.get("max_tokens", self.max_tokens))
+            model_max_tokens = min(
+                self.get_max_tokens(convo_id=convo_id) - 500,
+                kwargs.get("max_tokens", self.max_tokens),
+            )
         # Get response
         async with self.aclient.stream(
             "post",
             self.api_url.chat_url,
-            headers={"Authorization": f"Bearer {kwargs.get('api_key', self.api_key)}"},
+            headers={"Authorization": f"Bearer {
+                kwargs.get('api_key', self.api_key)}"},
             json={
                 "model": model or self.engine,
-                "messages": self.conversation[convo_id] if pass_history else [{"role": "system","content": self.system_prompt[convo_id]},{"role": role, "content": prompt}],
+                "messages": (
+                    self.conversation[convo_id]
+                    if pass_history
+                    else [
+                        {"role": "system",
+                            "content": self.system_prompt[convo_id]},
+                        {"role": role, "content": prompt},
+                    ]
+                ),
                 "stream": True,
                 # kwargs
                 "temperature": kwargs.get("temperature", self.temperature),
@@ -583,7 +774,10 @@ class chatgpt(BaseLLM):
         ) as response:
             if response.status_code != 200:
                 await response.aread()
-                raise Exception(f"{response.status_code} {response.reason_phrase} {response.text}")
+                raise Exception(
+                    f"{response.status_code} {
+                        response.reason_phrase} {response.text}"
+                )
             response_role: str = ""
             full_response: str = ""
             async for line in response.aiter_lines():
@@ -609,7 +803,8 @@ class chatgpt(BaseLLM):
                     content: str = delta["content"]
                     full_response += content
                     yield content
-        self.add_to_conversation(full_response, response_role, convo_id=convo_id)
+        self.add_to_conversation(
+            full_response, response_role, convo_id=convo_id)
         print("total tokens:", self.get_token_count(convo_id))
 
     async def ask_async(
@@ -646,7 +841,10 @@ class chatgpt(BaseLLM):
         """
         self.system_prompt[convo_id] = system_prompt or self.system_prompt[convo_id]
         self.conversation[convo_id] = [
-            {"role": "system", "content": system_prompt or self.system_prompt[convo_id]},
+            {
+                "role": "system",
+                "content": system_prompt or self.system_prompt[convo_id],
+            },
         ]
         if convo_id not in self.plugins:
             self.plugins[convo_id] = copy.deepcopy(PLUGINS)
@@ -685,7 +883,8 @@ class chatgpt(BaseLLM):
                 or "proxy" in keys
                 and loaded_config["proxy"]
             ):
-                self.proxy = loaded_config.get("session", loaded_config["proxy"])
+                self.proxy = loaded_config.get(
+                    "session", loaded_config["proxy"])
                 self.session = httpx.Client(
                     follow_redirects=True,
                     proxies=self.proxy,

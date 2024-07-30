@@ -6,33 +6,55 @@ from collections import defaultdict
 
 from ..utils import prompt
 
+
 class BaseAPI:
     def __init__(
         self,
-        api_url: str = (os.environ.get("API_URL", None) or "https://api.openai.com/v1/chat/completions"),
+        api_url: str = (
+            os.environ.get("API_URL", None)
+            or "https://api.openai.com/v1/chat/completions"
+        ),
     ):
         from urllib.parse import urlparse, urlunparse
+
         self.source_api_url: str = api_url
         parsed_url = urlparse(self.source_api_url)
         if parsed_url.scheme == "":
             raise Exception("Error: API_URL is not set")
-        if parsed_url.path != '/':
+        if parsed_url.path != "/":
             before_v1 = parsed_url.path.split("/v1")[0]
         else:
             before_v1 = ""
-        self.base_url: str = urlunparse(parsed_url[:2] + (before_v1,) + ("",) * 3)
-        self.v1_url: str = urlunparse(parsed_url[:2]+ (before_v1 + "/v1",) + ("",) * 3)
-        self.v1_models: str = urlunparse(parsed_url[:2] + (before_v1 + "/v1/models",) + ("",) * 3)
-        self.chat_url: str = urlunparse(parsed_url[:2] + (before_v1 + "/v1/chat/completions",) + ("",) * 3)
-        self.image_url: str = urlunparse(parsed_url[:2] + (before_v1 + "/v1/images/generations",) + ("",) * 3)
-        self.audio_transcriptions: str = urlunparse(parsed_url[:2] + (before_v1 + "/v1/audio/transcriptions",) + ("",) * 3)
+        self.base_url: str = urlunparse(
+            parsed_url[:2] + (before_v1,) + ("",) * 3)
+        self.v1_url: str = urlunparse(
+            parsed_url[:2] + (before_v1 + "/v1",) + ("",) * 3)
+        self.v1_models: str = urlunparse(
+            parsed_url[:2] + (before_v1 + "/v1/models",) + ("",) * 3
+        )
+        self.chat_url: str = urlunparse(
+            parsed_url[:2] + (before_v1 + "/v1/chat/completions",) + ("",) * 3
+        )
+        self.image_url: str = urlunparse(
+            parsed_url[:2] +
+            (before_v1 + "/v1/images/generations",) + ("",) * 3
+        )
+        self.audio_transcriptions: str = urlunparse(
+            parsed_url[:2] +
+            (before_v1 + "/v1/audio/transcriptions",) + ("",) * 3
+        )
+
 
 class BaseLLM:
     def __init__(
         self,
         api_key: str,
-        engine: str = os.environ.get("GPT_ENGINE") or "gpt-3.5-turbo",
-        api_url: str = (os.environ.get("API_URL", None) or "https://api.openai.com/v1/chat/completions"),
+        engine: str = os.environ.get("GPT_ENGINE")
+        or "meta-llama/Meta-Llama-3.1-8B-Instruct",
+        api_url: str = (
+            os.environ.get("API_URL", None)
+            or "https://api.openai.com/v1/chat/completions"
+        ),
         system_prompt: str = prompt.chatgpt_system_prompt,
         proxy: str = None,
         timeout: float = 600,
@@ -47,7 +69,9 @@ class BaseLLM:
     ) -> None:
         self.api_key: str = api_key
         self.engine: str = engine
-        self.api_url: str = BaseAPI(api_url or "https://api.openai.com/v1/chat/completions")
+        self.api_url: str = BaseAPI(
+            api_url or "https://api.openai.com/v1/chat/completions"
+        )
         self.system_prompt: dict = defaultdict(lambda: system_prompt)
         self.max_tokens: int = max_tokens
         self.truncate_limit: int = truncate_limit
@@ -58,29 +82,48 @@ class BaseLLM:
         self.reply_count: int = reply_count
         self.max_tokens: int = max_tokens or (
             4096
-            if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-3.5-turbo-1106" in engine or "claude" in engine or "gpt-4o" in engine
-            else 31000
-            if "gpt-4-32k" in engine
-            else 7000
-            if "gpt-4" in engine
-            else 16385
-            if "gpt-3.5-turbo-16k" in engine
-            # else 99000
-            # if "claude-2.1" in engine
-            else 4000
+            if "gpt-4-1106-preview" in engine
+            or "gpt-4-0125-preview" in engine
+            or "gpt-4-turbo" in engine
+            or "gpt-3.5-turbo-1106" in engine
+            or "claude" in engine
+            or "gpt-4o" in engine
+            else (
+                31000
+                if "gpt-4-32k" in engine
+                else (
+                    7000
+                    if "gpt-4" in engine
+                    else (
+                        16385
+                        if "gpt-3.5-turbo-16k" in engine
+                        # else 99000
+                        # if "claude-2.1" in engine
+                        else 74000
+                    )
+                )
+            )
         )
         self.truncate_limit: int = truncate_limit or (
             127500
-            if "gpt-4-1106-preview" in engine or "gpt-4-0125-preview" in engine or "gpt-4-turbo" in engine or "gpt-4o" in engine
-            else 30500
-            if "gpt-4-32k" in engine
-            else 6500
-            if "gpt-4" in engine
-            else 14500
-            if "gpt-3.5-turbo-16k" in engine or "gpt-3.5-turbo-1106" in engine
-            else 98500
-            if "claude-2.1" in engine
-            else 3500
+            if "gpt-4-1106-preview" in engine
+            or "gpt-4-0125-preview" in engine
+            or "gpt-4-turbo" in engine
+            or "gpt-4o" in engine
+            else (
+                30500
+                if "gpt-4-32k" in engine
+                else (
+                    6500
+                    if "gpt-4" in engine
+                    else (
+                        14500
+                        if "gpt-3.5-turbo-16k" in engine
+                        or "gpt-3.5-turbo-1106" in engine
+                        else 98500 if "claude-2.1" in engine else 7500
+                    )
+                )
+            )
         )
         self.timeout: float = timeout
         self.proxy = proxy
@@ -92,7 +135,8 @@ class BaseLLM:
             },
         )
         if proxy := (
-            proxy or os.environ.get("all_proxy") or os.environ.get("ALL_PROXY") or None
+            proxy or os.environ.get(
+                "all_proxy") or os.environ.get("ALL_PROXY") or None
         ):
             if "socks5h" not in proxy:
                 self.aclient = httpx.AsyncClient(
@@ -121,6 +165,7 @@ class BaseLLM:
         self.function_call_max_loop = 10
         self.use_plugins = use_plugins
         from ..plugins import PLUGINS
+
         self.plugins: dict[str, list[dict]] = {
             "default": PLUGINS,
         }
@@ -260,7 +305,10 @@ class BaseLLM:
         Reset the conversation
         """
         self.conversation[convo_id] = [
-            {"role": "system", "content": system_prompt or self.system_prompt[convo_id]},
+            {
+                "role": "system",
+                "content": system_prompt or self.system_prompt[convo_id],
+            },
         ]
 
     def save(self, file: str, *keys: str) -> None:
