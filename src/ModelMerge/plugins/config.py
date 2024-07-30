@@ -63,8 +63,8 @@ async def get_tools_result(
         )
         if function_response:
             function_response = (
-                f"You need to response the following question: {prompt}. Search results is provided inside <Search_results></Search_results> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the Search results provided. Please response in {
-                    LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive. Directly response markdown format, without using markdown code blocks"
+                f"""You need to response the following question: {prompt}. Search results is provided inside <Search_results></Search_results> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the Search results provided. Please response in {
+                    LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive. Directly response markdown format, without using markdown code blocks"""
                 "Here is the Search results, inside <Search_results></Search_results> XML tags:"
                 "<Search_results>"
                 "{}"
@@ -89,8 +89,8 @@ async def get_tools_result(
             function_response, function_call_max_tokens, engine
         )
         function_response = (
-            f"Tarvel infomation is provided inside <infomation></infomation> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the tarvel infomation provided. Please response in {
-                LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive."
+            f"""Tarvel infomation is provided inside <infomation></infomation> XML tags. Your task is to think about the question step by step and then answer the above question in {LANGUAGE} based on the tarvel infomation provided. Please response in {
+                LANGUAGE} and adopt a style that is logical, in-depth, and detailed. Note: In order to make the answer appear highly professional, you should be an expert in textual analysis, aiming to make the answer precise and comprehensive."""
             "Here is the tarvel infomation, inside <infomation></infomation> XML tags:"
             "<infomation>"
             "{}"
