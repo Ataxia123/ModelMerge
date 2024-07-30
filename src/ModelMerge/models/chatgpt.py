@@ -528,7 +528,7 @@ class chatgpt(BaseLLM):
         if response != None and response.status_code != 200:
             raise Exception(
                 f"""{response.status_code} {
-                            response.reason} {response.text}"""
+                    response.reason} {response.text}"""
             )
         if response is None:
             raise Exception(
@@ -726,8 +726,8 @@ class chatgpt(BaseLLM):
             "post",
             self.api_url.chat_url,
             headers={
-                "Authorization": f"Bearer {
-                kwargs.get('api_key', self.api_key)}"
+                "Authorization": f"""Bearer {
+                kwargs.get('api_key', self.api_key)}"""
             },
             json={
                 "model": model or self.engine,
