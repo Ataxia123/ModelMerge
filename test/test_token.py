@@ -1,19 +1,21 @@
+from dotenv import load_dotenv
+import re
+import json
+import requests
+import config
+from utils.function_call import function_call_list
+import tiktoken
 import os
 import sys
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import tiktoken
-from utils.function_call import function_call_list
-import config
-import requests
-import json
-import re
 
-from dotenv import load_dotenv
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 load_dotenv()
+
 
 def get_token_count(messages) -> int:
     tiktoken.get_encoding("cl100k_base")
-    encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+    encoding = tiktoken.encoding_for_model("meta-llama/Meta-Llama-3.1-8B-Instruct")
 
     num_tokens = 0
     for message in messages:
@@ -26,8 +28,9 @@ def get_token_count(messages) -> int:
                 num_tokens += 5  # role is always required and always 1 token
     num_tokens += 5  # every reply is primed with <im_start>assistant
     return num_tokens
-# print(get_token_count(message_list))
 
+
+# print(get_token_count(message_list))
 
 
 def get_message_token(url, json_post):
@@ -62,9 +65,16 @@ def get_message_token(url, json_post):
 
 if __name__ == "__main__":
     # message_list = [{'role': 'system', 'content': 'You are ChatGPT, a large language model trained by OpenAI. Respond conversationally in Simplified Chinese. Knowledge cutoff: 2021-09. Current date: [ 2023-12-12 ]'}, {'role': 'user', 'content': 'hi'}]
-    messages = [{'role': 'system', 'content': 'You are ChatGPT, a large language model trained by OpenAI. Respond conversationally in Simplified Chinese. Knowledge cutoff: 2021-09. Current date: [ 2023-12-12 ]'}, {'role': 'user', 'content': 'hi'}, {'role': 'assistant', 'content': '你好！有什么我可以帮助你的吗？'}]
+    messages = [
+        {
+            "role": "system",
+            "content": "You are ChatGPT, a large language model trained by OpenAI. Respond conversationally in Simplified Chinese. Knowledge cutoff: 2021-09. Current date: [ 2023-12-12 ]",
+        },
+        {"role": "user", "content": "hi"},
+        {"role": "assistant", "content": "你好！有什么我可以帮助你的吗？"},
+    ]
 
-    model = "gpt-3.5-turbo"
+    model = "meta-llama/Meta-Llama-3.1-8B-Instruct"
     temperature = 0.5
     top_p = 0.7
     presence_penalty = 0.0
@@ -75,16 +85,16 @@ if __name__ == "__main__":
     url = config.bot_api_url.chat_url
 
     json_post = {
-            "model": model,
-            "messages": messages,
-            "stream": True,
-            "temperature": temperature,
-            "top_p": top_p,
-            "presence_penalty": presence_penalty,
-            "frequency_penalty": frequency_penalty,
-            "n": reply_count,
-            "user": role,
-            "max_tokens": model_max_tokens,
+        "model": model,
+        "messages": messages,
+        "stream": True,
+        "temperature": temperature,
+        "top_p": top_p,
+        "presence_penalty": presence_penalty,
+        "frequency_penalty": frequency_penalty,
+        "n": reply_count,
+        "user": role,
+        "max_tokens": model_max_tokens,
     }
     # json_post.update(function_call_list["base"])
     # if config.PLUGINS["SEARCH_USE_GPT"]:
